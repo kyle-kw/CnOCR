@@ -1,0 +1,13 @@
+version: "3"
+services:
+  cnocr-api:
+    image: ccr.ccs.tencentyun.com/zhongbiao/cnocr-api:v1
+    container_name: cnocr-api
+    ports:
+      - "18000:8000"
+    environment:
+      CONTEXT: gpu
+    volumes:
+      - ./logs:/app/logs
+    runtime: nvidia
+
