@@ -6,7 +6,6 @@
 import time
 from typing import List
 from fastapi import FastAPI, UploadFile, Form, File
-# from fastapi.responses import JSONResponse
 
 from app.utils import generate_task_id, put_task, get_response, check_file, logger, \
     start_daemon_thread
@@ -22,11 +21,11 @@ def root():
 
 
 @app.get("/ping")
-def root():
+def ping():
     return {"message": "pong"}
 
 
-@app.post("/batch/ocr")
+@app.post("/v1/batch/ocr")
 def ocr(image_lst: List[UploadFile] = File(...),
         ocr_kwargs: OcrKwargs = Form(default=OcrKwargs()),
         timeout: int = Form(default=10)
@@ -64,12 +63,12 @@ def ocr(image_lst: List[UploadFile] = File(...),
     return OcrBatchResponse(results=res)
 
 
-@app.post("/ocr")
-def ocr(image: UploadFile = File(...),
-        ocr_kwargs: OcrKwargs = Form(default=OcrKwargs()),
-        timeout: int = Form(default=10)
-        ) -> OcrResponse:
-    logger.debug(f"ocr: Received image")
+@app.post("/v1/ocr")
+def one_ocr(image: UploadFile = File(...),
+            ocr_kwargs: OcrKwargs = Form(default=OcrKwargs()),
+            timeout: int = Form(default=10)
+            ) -> OcrResponse:
+    logger.debug("ocr: Received image")
 
     image_obj = check_file(image)
     task_id = generate_task_id()
@@ -89,7 +88,7 @@ def ocr(image: UploadFile = File(...),
 
     logger.debug(f"ocr: Results: {res}")
     if not unfinished:
-        logger.info(f"ocr: Finished 1 image")
+        logger.info("ocr: Finished 1 image")
     else:
         logger.warning(f"ocr: Failed to finish 1 image within {timeout} seconds")
 

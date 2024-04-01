@@ -52,8 +52,8 @@ class EnvSettings(BaseSettings):
     queue_timeout: float = 5.0
     queue_return: int = 10
 
-    response_clear_time: int = 60
-    response_clear_sleep: int = 5
+    response_clear_time: int = 600
+    response_clear_sleep: int = 10
 
 
 settings = json.loads(Settings().json(exclude_defaults=True))
