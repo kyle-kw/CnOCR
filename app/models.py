@@ -26,7 +26,7 @@ class OcrResponse(BaseModel):
 
 
 class OcrBatchResponse(BaseModel):
-    results: dict
+    results: list
     message: str = 'success'
     code: int = 0
 

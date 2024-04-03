@@ -6,6 +6,7 @@
 import time
 from typing import List
 from fastapi import FastAPI, UploadFile, Form, File
+from fastapi.exceptions import HTTPException
 
 from app.utils import generate_task_id, put_task, get_response, check_file, logger, \
     start_daemon_thread
@@ -32,25 +33,31 @@ def ocr(image_lst: List[UploadFile] = File(...),
         ) -> OcrBatchResponse:
     logger.debug(f"batch/ocr: Received {len(image_lst)} images")
 
-    task_id_lst = []
+    task_id_lst = dict()
     for image in image_lst:
+        if image.content_type not in ('image/jpeg', 'image/png'):
+            raise HTTPException(status_code=400, detail="Unsupported file type")
+
         image_obj = check_file(image)
         task_id = generate_task_id()
         put_task(QueueRequest(task_id=task_id, image=image_obj, ocr_kwargs=ocr_kwargs),
                  timeout=timeout)
-        task_id_lst.append(task_id)
+        task_id_lst[task_id] = image.filename
     logger.debug(f"batch/ocr: Task IDs: {task_id_lst}")
 
     unfinished = True
-    res = dict()
+    res = list()
     now = time.time()
     while unfinished and (time.time() - now) < timeout:
         time.sleep(0.1)
         unfinished = False
-        for i, task_id in enumerate(task_id_lst):
+        for task_id, file_name in task_id_lst.items():
             response_data: List[Response] = get_response(task_id)
             if response_data:
-                res[i] = [d.response for d in response_data]
+                res.append({
+                    "image": file_name or "",
+                    "result": response_data[0].response
+                })
             else:
                 unfinished = True
 
